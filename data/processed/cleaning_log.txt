@@ -2,8 +2,8 @@ Cleaning log - trust_experiment_data.csv (raw file is never edited)
 Step                     Rule                                   Rows before - after   What it revealed
 Duplicates               same pid twice                         48 - 48               none
 Missing values           required columns empty                 48 - 48               none in required columns; open_text empty in 22 rows and guess_text in 11 rows (both optional)
-Impossible values        trust_total outside 0-40, answers      48 - 48               none; all 48 totals recompute from the 10 point columns
+Impossible values        trust_total outside 0-40, answers      48 - 48               none; all 48 totals recompute from the 10 point columns (pts range 0-4, totals 7-36)
                          outside option range
-Pilot rows               pilot = 1 removed                      48 - 48               no row is flagged as pilot
-Short sessions           duration_s < 120 -> flag only          48 - 48               2 rows flagged (P01 48 s, P03 61 s); kept, reported with and without
-Manual assignment        assigned_by = manual                   48 - 48               1 row (P04, condition C); kept
+Pilot rows               pilot = 1 removed                      48 - 43               5 rows removed (P01-P05); remaining 43 = A 11, B 11, C 10, D 11
+Short sessions           duration_s < 120 -> flag only          43 - 43               0 rows flagged in the 43; the 2 raw sessions under 2 min (P01 48 s, P03 61 s) were pilot rows and are already removed
+Manual assignment        assigned_by = manual                   43 - 43               0 rows; the only manual row (P04, condition C) was a pilot row and is removed

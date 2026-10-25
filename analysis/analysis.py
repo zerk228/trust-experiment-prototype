@@ -1,14 +1,16 @@
 """Descriptive check of the trust experiment data (Assignment 3, Segment 4).
 Run from the repo root:  python analysis/analysis.py
 Reads data/raw/trust_experiment_data.csv, writes data/processed/clean_data.csv
-and analysis/summary_by_condition.csv. No row is removed or edited."""
+and analysis/summary_by_condition.csv. Raw file is never edited; the only rows
+removed are pilot rows (pilot = 1)."""
 import pandas as pd, numpy as np
 from scipy import stats
 
-raw = pd.read_csv('data/raw/trust_experiment_data.csv')
-d = raw.copy()
-d['short_session'] = (d.duration_s < 120).astype(int)   # flag only, nothing removed
+raw = pd.read_csv('data/raw/trust_experiment_data.csv', encoding='utf-8-sig')
+d = raw[raw.pilot == 0].copy()                          # drop pilot rows only
+d['short_session'] = (d.duration_s < 120).astype(int)   # flag only, nothing else removed
 d.to_csv('data/processed/clean_data.csv', index=False)
+print(f'rows: raw {len(raw)} -> clean {len(d)} (pilot removed: {raw[raw.pilot == 1].pid.tolist()})\n')
 
 pts = [f'pts{i}' for i in range(1, 11)]
 assert (d[pts].sum(axis=1) == d.trust_total).all(), 'totals do not recompute'
@@ -24,7 +26,7 @@ print(f'ER1 correct-incorrect = {diff:.2f}  95% CI {diff-1.96*se:.1f} to {diff+1
 
 m = d.groupby('condition').trust_total.mean()
 drop_s, drop_c = m['A']-m['B'], m['C']-m['D']
-se_i = np.sqrt(sum(d[d.condition == c].trust_total.var(ddof=1)/12 for c in 'ABCD'))
+se_i = np.sqrt(sum(d[d.condition == c].trust_total.var(ddof=1)/(d.condition == c).sum() for c in 'ABCD'))
 print(f'ER2 drop simple={drop_s:.2f} drop complex={drop_c:.2f} interaction={drop_c-drop_s:.2f}  CI {drop_c-drop_s-1.96*se_i:.1f} to {drop_c-drop_s+1.96*se_i:.1f}')
 print('ER3 mean A =', round(m['A'], 2), '| ER4 mean B =', round(m['B'], 2), ', D =', round(m['D'], 2))
 print('ER6 check_correct by accuracy', d.groupby('accuracy').check_correct.mean().round(2).to_dict())
