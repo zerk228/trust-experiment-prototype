@@ -5,7 +5,7 @@ Version note
   Between v1 and v3 only three columns differ: pilot (5 rows: P01-P05 set to 1), open_text (25 rows) and guess_text (36 rows).
   All numeric answers, scores, conditions, scenario IDs and times are identical in both versions.
   Reason, as reported by the team: the free-text entries in v1 were mixed up by a team member and were corrected, and the pilot sessions were marked.
-  Source used for the corrections: [FILL: paper notes / session notes / other].
+  Source used for the corrections: the team member who mixed up the entries corrected them.
 Step                 Rule                                      Rows before - after   What it revealed
 Duplicates           same pid twice                            48 - 48               none
 Missing values       required columns empty                    48 - 48               none in required columns; open_text empty in 22 rows and guess_text in 11 rows (both optional)
