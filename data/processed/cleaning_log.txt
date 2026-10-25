@@ -1,0 +1,15 @@
+Cleaning log - trust_experiment_data.csv
+Version note
+  v1 (data/raw/earlier_version/trust_experiment_data_v1_first_export.csv) is the first export.
+  v3 (data/raw/trust_experiment_data.csv) is the file used for the analysis.
+  Between v1 and v3 only three columns differ: pilot (5 rows: P01-P05 set to 1), open_text (25 rows) and guess_text (36 rows).
+  All numeric answers, scores, conditions, scenario IDs and times are identical in both versions.
+  Reason, as reported by the team: the free-text entries in v1 were mixed up by a team member and were corrected, and the pilot sessions were marked.
+  Source used for the corrections: [FILL: paper notes / session notes / other].
+Step                 Rule                                      Rows before - after   What it revealed
+Duplicates           same pid twice                            48 - 48               none
+Missing values       required columns empty                    48 - 48               none in required columns; open_text empty in 22 rows and guess_text in 11 rows (both optional)
+Impossible values    trust_total outside 0-40, answers         48 - 48               none; all 48 totals recompute from the 10 point columns
+                     outside option range
+Pilot sessions       pilot = 1 (P01-P05) left out of the       48 - 43 (main)        P01 (48 s) and P03 (61 s) were very short, P04 was assigned by hand (manual)
+                     main analysis
