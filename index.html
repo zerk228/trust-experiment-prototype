@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trust experiment prototype</title>
+<style>
+:root{--bg:#f6f6f3;--fg:#1f2937;--muted:#6b7280;--card:#ffffff;--line:#d6d9de;--accent:#2563eb;--accentfg:#ffffff;--bot:#e8eefc;--me:#dcf5e3;--order:#fff7e0;--on:#1f2937;--onfg:#ffffff;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101318;--fg:#e5e7eb;--muted:#9ca3af;--card:#1a1f27;--line:#2e3540;--accent:#5b8def;--accentfg:#0b0f14;--bot:#22304d;--me:#1f3a2a;--order:#3a3320;--on:#e5e7eb;--onfg:#101318;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101318;--fg:#e5e7eb;--muted:#9ca3af;--card:#1a1f27;--line:#2e3540;--accent:#5b8def;--accentfg:#0b0f14;--bot:#22304d;--me:#1f3a2a;--order:#3a3320;--on:#e5e7eb;--onfg:#101318;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{max-width:720px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+h2{margin:0 0 8px;font-size:20px}h3{margin:12px 0 6px;font-size:16px}
+.muted{color:var(--muted);font-size:14px}
+.btn{background:var(--accent);color:var(--accentfg);border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:default}.btn[hidden]{display:none}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.row{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.scale{display:flex;gap:6px;flex-wrap:wrap}
+.sc{min-width:42px;padding:8px 0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;font:inherit;cursor:pointer}
+.sc.on{background:var(--on);color:var(--onfg);border-color:var(--on)}
+.ends{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:4px}
+.q{margin:14px 0}.q p{margin:0 0 6px}
+.opts{display:flex;flex-direction:column;gap:6px}.opt{text-align:left;padding:8px 12px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;font:inherit;cursor:pointer}.opt.on{background:var(--on);color:var(--onfg);border-color:var(--on)}
+input[type=text],select,textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:inherit}
+label{display:block;margin:10px 0 4px;font-size:14px;color:var(--muted)}
+.script{border-left:3px solid var(--accent);padding:4px 12px;font-style:italic;margin:8px 0}
+.hd{font-weight:600}
+.order{background:var(--order);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:14px}
+.log{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.b{padding:8px 12px;border-radius:12px;max-width:88%}
+.b.me{background:var(--me);align-self:flex-end}.b.bot{background:var(--bot);align-self:flex-start}
+.typing{color:var(--muted);font-style:italic}
+.foot{text-align:center}.link{background:none;border:0;color:var(--muted);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script id="logic">
+const COLS=['pid','pilot','condition','difficulty','accuracy','assigned_by','prior_use','scenario_ids','reply_words','trust1','trust2','trust3','trust4','trust5','trust6','trust7','trust8','trust9','trust10','pts1','pts2','pts3','pts4','pts5','pts6','pts7','pts8','pts9','pts10','trust_total','trust_mean','trust_band','realism','check_correct','check_difficulty','open_text','guess_text','started_at','ended_at','duration_s'];
+const CONDS={A:{difficulty:'simple',accuracy:'correct'},B:{difficulty:'simple',accuracy:'incorrect'},C:{difficulty:'complex',accuracy:'correct'},D:{difficulty:'complex',accuracy:'incorrect'}};
+/* Scenario pool: add more objects to reach 10 + 10. Each needs card (order page lines), msg, ok (correct reply), bad (incorrect reply, within ±15% of the words of ok). */
+const POOL={
+simple:[
+{id:'S1',card:['Order #48213','Status: out for delivery today','Expected by 6 pm'],msg:'Where is my order #48213?',
+ ok:'Your order #48213 is out for delivery today and is expected to arrive by 6 pm.',
+ bad:'Your order #48213 was delivered yesterday and has been left at your front door.'},
+{id:'S2',card:['Order #50377','Status: shipped on Monday with SwiftPost','Estimated delivery: Thursday'],msg:'When will my order #50377 arrive?',
+ ok:'Your order #50377 shipped on Monday with SwiftPost and is estimated to arrive on Thursday.',
+ bad:'Your order #50377 has not shipped yet and is estimated to arrive next month.'},
+{id:'S3',card:['Order #51902','Status: processing, not yet shipped','Payment: confirmed'],msg:'Has my order #51902 been shipped yet?',
+ ok:'Not yet. Your order #51902 is still being processed, and your payment has been confirmed.',
+ bad:'Yes. Your order #51902 shipped this morning, but your payment has not been confirmed.'},
+{id:'S4',card:['Order #52610','Status: delivered to parcel locker 14','Pickup code sent by SMS'],msg:'What is the status of my order #52610?',
+ ok:'Your order #52610 was delivered to parcel locker 14, and the pickup code was sent to you by SMS.',
+ bad:'Your order #52610 is still at the warehouse, and no pickup code has been issued to you yet.'}
+],
+complex:[
+{id:'C1',card:['Order #48771','Expected delivery: two days ago','Tracking: stalled at sorting hub since Saturday','Address check: postcode does not match the street'],
+ msg:'My order #48771 should have arrived two days ago, tracking hasn’t changed since Saturday, and I think I entered the wrong postcode. What now?',
+ ok:'Tracking has been stalled at the sorting hub since Saturday because the postcode on the order does not match the street. I have sent the carrier a correction request with your corrected postcode. Delivery is now expected within 2 working days, and if it has not moved in 48 hours we will send a free replacement.',
+ bad:'Your order is on schedule and has not stalled at any point. The postcode cannot be changed once an order has shipped, and a wrong postcode would not delay delivery, so no action is needed. Delivery is expected within 2 working days, and replacements are not offered for shipped orders.'},
+{id:'C2',card:['Order #53114','Tracking: delivered yesterday, “left at front door”','Delivery photo: parcel at a different building','Guarantee: replacement or refund if not found within 2 working days'],
+ msg:'The tracking for my order #53114 says delivered, but I received nothing, my neighbour says the courier left a parcel at another building, and I need it by Friday. What can you do?',
+ ok:'The delivery photo for order #53114 shows the parcel at a different building, so it was misdelivered. I have opened a courier investigation, and if the parcel is not found within 2 working days we will send a replacement or refund you, whichever you prefer.',
+ bad:'Order #53114 was delivered correctly to your front door, as the tracking shows. Misdeliveries cannot be investigated once a parcel is marked delivered, and no replacement or refund is possible, so we advise you to wait and check again next week.'},
+{id:'C3',card:['Order #54220','Address change: confirmed before shipping','Tracking: two city hubs (parcel being rerouted to the new address)','Delivery expected in 2 working days'],
+ msg:'I changed the address on order #54220 after ordering, now the tracking shows two different cities, and I’m worried the parcel will be sent back. Can you fix this?',
+ ok:'Your address change for order #54220 was confirmed before shipping. The second city appears because the parcel is being rerouted to the new address, and it will not be returned. Delivery is expected within 2 working days, and no action is needed from you.',
+ bad:'Your address change for order #54220 was not received before shipping. The second city appears because the parcel is being returned to the sender, and a new order must be placed. Delivery to the new address is not possible, and you will receive a refund only after five weeks.'},
+{id:'C4',card:['Order #55008 (3 items)','Shipment 1: 2 items, delivered','Shipment 2: 1 item, in transit, arrives tomorrow','Tracking page wrongly shows “delivered in full”'],
+ msg:'Part of order #55008 arrived, one item is missing, and the tracking says delivered in full. What are my options?',
+ ok:'Your order #55008 was sent in two shipments. The first, with two items, has been delivered, and the third item is in transit and arrives tomorrow. The “delivered in full” status is a tracking error that we have reported, so please wait one more day.',
+ bad:'Your order #55008 was sent in one shipment and the tracking is correct, so all three items have been delivered. Missing items cannot be claimed after delivery is confirmed, and no further shipment is planned, so we cannot offer a replacement or a refund.'}
+]};
+/* Trust questionnaire: 10 questions in mixed formats, each worth 0-4 points; total 0-40.
+   choice: p[] = points per option (answer = option number 1..n). num: map[] = points for answers 0..10.
+   scale5: answer 1-5, points = answer-1 (rev: 5-answer). Bands, fixed before data collection: 0-13 distrust, 14-26 mixed, 27-40 trust. */
+const SD='1 = strongly disagree',SA='5 = strongly agree';
+const TRUST_ITEMS=[
+{k:'choice',t:'Your parcel with a gift must arrive by Friday. The assistant says it will arrive on Thursday. What would you do?',
+ o:['Not check anything else','Check the tracking page once','Ask a human agent to confirm','Buy a gift elsewhere, just in case'],p:[4,3,1,0]},
+{k:'num',t:'Out of 10 similar questions, how many do you expect this assistant would answer correctly?',lo:'0 = none',hi:'10 = all',map:[0,0,0,1,1,2,2,3,3,4,4]},
+{k:'num',t:'You have 10 tokens. Each token you place on the assistant’s next answer is doubled if the answer is correct and lost if it is wrong. How many tokens do you place?',lo:'0 tokens',hi:'10 tokens',map:[0,0,1,1,2,2,2,3,3,4,4]},
+{k:'choice',t:'What is the lowest accuracy at which you would prefer this assistant over a human agent who answers after 24 hours?',
+ o:['At 50% or higher','At 70% or higher','At 90% or higher','Only at 99% or higher','Never, I would always prefer a human'],p:[4,3,2,1,0]},
+{k:'choice',t:'Your parcel contains something worth $300 and it is late. Whom would you contact first?',
+ o:['Only the assistant','The assistant first, then a human if the answer is unclear','A human agent directly','I would not contact this store through chat at all'],p:[4,3,1,0]},
+{k:'scale5',t:'The assistant understood exactly what I was asking in each situation.',lo:SD,hi:SA},
+{k:'scale5',rev:true,t:'At least one reply made me worry that the assistant had misunderstood or misled me.',lo:SD,hi:SA},
+{k:'choice',t:'A friend’s parcel is lost. What would you tell your friend?',
+ o:['“Use the assistant.”','“Try the assistant, but verify what it says.”','“Go straight to a human.”','“Don’t use the assistant.”'],p:[4,3,1,0]},
+{k:'choice',showLast:true,t:'Here is the last reply the assistant gave you. How much would you rely on it?',
+ o:['I would rely on all of it','I would rely on most of it','I would rely on only a part of it','I would not rely on any of it'],p:[4,3,1,0]},
+{k:'scale5',t:'Describe the assistant overall:',lo:'unreliable',hi:'reliable'}
+];
+function itemPoints(i,v){const it=TRUST_ITEMS[i];if(it.k==='choice')return it.p[v-1];if(it.k==='num')return it.map[v];return it.rev?5-v:v-1;}
+function trustTotal(raw){return raw.reduce((sum,v,i)=>sum+itemPoints(i,v),0);}
+function trustBand(total){return total<=13?'distrust':total<=26?'mixed':'trust';}
+function shuffle(a,rnd){rnd=rnd||Math.random;const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function nextBlock(rnd){return shuffle(['A','B','C','D'],rnd);}
+function pickScenarios(d,rnd){return shuffle(POOL[d],rnd).slice(0,3);}
+function words(s){return s.trim().split(/\s+/).length;}
+function mean(a){return a.reduce((x,y)=>x+y,0)/a.length;}
+function buildRow(s,endedAt){
+ const c=CONDS[s.cond],t=s.trust,tot=trustTotal(t);
+ const r={pid:s.pid,pilot:s.pilot?1:0,condition:s.cond,difficulty:c.difficulty,accuracy:c.accuracy,assigned_by:s.assignedBy,prior_use:s.prior,
+  scenario_ids:s.scen.map(x=>x.id).join('|'),reply_words:s.words.join('|')};
+ t.forEach((v,k)=>{r['trust'+(k+1)]=v;});
+ t.forEach((v,k)=>{r['pts'+(k+1)]=itemPoints(k,v);});
+ Object.assign(r,{trust_total:tot,trust_mean:tot/10,trust_band:trustBand(tot),realism:s.realism,check_correct:s.chkCorrect,check_difficulty:s.chkDiff,
+  open_text:s.open,guess_text:s.guess,started_at:s.t0,ended_at:endedAt,duration_s:Math.round((Date.parse(endedAt)-Date.parse(s.t0))/1000)});
+ return r;
+}
+function csvCell(v){let t=v==null?'':String(v);if(/^[=+\-@]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"';}
+function toCSV(rows){return [COLS.join(',')].concat(rows.map(r=>COLS.map(c=>csvCell(r[c])).join(','))).join('\r\n');}
+</script>
+
+<script id="ui">
+const KS='trustExp.sessions',KQ='trustExp.queue',mem={};
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return k in mem?mem[k]:d;}},
+ set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){mem[k]=v;}},del(k){try{localStorage.removeItem(k);}catch(e){}delete mem[k];}};
+const DELAY=new URLSearchParams(location.search).has('fast')?30:2000;
+const app=document.getElementById('app');
+let S=null,csvText='';
+function el(tag,attrs,...kids){const e=document.createElement(tag);for(const k in (attrs||{})){const v=attrs[k];
+ if(k==='class')e.className=v;else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);else if(v===true)e.setAttribute(k,'');else if(v!==false&&v!=null)e.setAttribute(k,v);}
+ kids.flat().forEach(c=>{if(c==null||c===false)return;e.append(c.nodeType?c:document.createTextNode(c));});return e;}
+function show(node,abort){app.replaceChildren(node);window.scrollTo(0,0);
+ if(abort){let armed=false;const b=el('button',{class:'link',onclick:()=>{if(!armed){armed=true;b.textContent='Click again to abort (nothing is saved)';}else{S=null;setup();}}},'Researcher: abort session');app.append(el('div',{class:'foot'},b));}}
+function scale(n,lo,hi,onPick,start){start=start==null?1:start;const row=el('div',{class:'scale'}),btns=[];
+ for(let i=start;i<start+n;i++){const b=el('button',{type:'button',class:'sc',onclick:()=>{btns.forEach(x=>x.classList.remove('on'));b.classList.add('on');onPick(i);}},String(i));btns.push(b);row.append(b);}
+ return el('div',null,row,el('div',{class:'ends'},el('span',null,lo),el('span',null,hi)));}
+
+function setup(){
+ const sessions=store.get(KS,[]);let q=store.get(KQ,[]);if(!q.length){q=nextBlock();store.set(KQ,q);}
+ const pidIn=el('input',{type:'text',value:'P'+String(sessions.length+1).padStart(2,'0')});
+ const sel=el('select',null,el('option',{value:'auto'},'Auto (next in block): '+q[0]),...['A','B','C','D'].map(c=>el('option',{value:c},'Manual: '+c)));
+ const pil=el('input',{type:'checkbox'});
+ const start=el('button',{class:'btn',onclick:()=>{const pid=pidIn.value.trim();if(!pid){pidIn.focus();return;}const v=sel.value;
+  S={pid,pilot:pil.checked,cond:v==='auto'?q[0]:v,assignedBy:v==='auto'?'auto':'manual',idx:0,words:[],trust:Array(10).fill(null),realism:null,chkCorrect:null,chkDiff:null,open:'',prior:null,guess:'',t0:new Date().toISOString()};
+  S.scen=pickScenarios(CONDS[S.cond].difficulty);pre();}},'Start session');
+ let armed=false;const clr=el('button',{class:'btn alt',onclick:()=>{if(!armed){armed=true;clr.textContent='Click again to delete all saved data';}else{store.del(KS);store.del(KQ);csvText='';setup();}}},'Delete all data');
+ const pilotN=sessions.filter(r=>r.pilot==1).length;
+ show(el('div',null,
+  el('div',{class:'card'},el('h2',null,'Researcher setup'),el('p',{class:'muted'},'Participants should not see this screen. Conditions are assigned in shuffled blocks of 4 (A–D); pilot sessions do not use up block slots.'),
+   el('label',null,'Participant ID'),pidIn,el('label',null,'Condition'),sel,el('label',null,el('span',null,'Pilot session (flagged in the data) '),pil),
+   el('h3',null,'Read this aloud, word for word'),
+   el('div',{class:'script'},'“Thank you for taking part. Imagine that you ordered two items from an online store called ShopNest a few days ago, and you want to find out about your order. You will chat with ShopNest’s AI support assistant. You will see three situations, one at a time. For each one, send the message shown on the screen to the assistant, then read its reply. Nothing you do is right or wrong. After the three exchanges you will answer a short questionnaire about the assistant. Taking part is voluntary, you can stop at any time, and your answers are anonymous. Do you have any questions?”'),
+   el('div',{class:'row'},start)),
+  el('div',{class:'card'},el('h3',null,'Data'),el('p',{class:'muted'},'Saved sessions: '+sessions.length+' (pilot: '+pilotN+'). Stored in this browser only; export before clearing the browser.'),
+   el('div',{class:'row'},el('button',{class:'btn alt',onclick:exportCSV},'Export CSV'),clr),
+   csvText?el('textarea',{rows:8,readonly:true},csvText):null)));
+}
+async function exportCSV(){
+ const csv=toCSV(store.get(KS,[]));
+ try{if(typeof claude!=='undefined'){const d=await claude.use('downloads');if(d){await d.save({filename:'trust_experiment_data.csv',data:csv});return;}}}
+ catch(e){if(e&&e.code==='declined')return;}
+ csvText=csv;setup();
+}
+function pre(){let v=null;
+ const next=el('button',{class:'btn',disabled:true,onclick:()=>{S.prior=v;chat();}},'Continue');
+ show(el('div',{class:'card'},el('h2',null,'Before we start'),el('p',null,'How often have you used a customer-service chatbot?'),
+  scale(5,'1 = never','5 = weekly',i=>{v=i;next.disabled=false;}),el('div',{class:'row'},next)),true);}
+function chat(){
+ const sc=S.scen[S.idx],acc=CONDS[S.cond].accuracy,last=S.idx===2,log=el('div',{class:'log'});
+ const send=el('button',{class:'btn',onclick:async()=>{
+  send.hidden=true;log.append(el('div',{class:'b me'},sc.msg));
+  const t=el('div',{class:'b bot typing'},'Assistant is typing…');log.append(t);
+  await new Promise(r=>setTimeout(r,DELAY));
+  const reply=acc==='correct'?sc.ok:sc.bad;t.classList.remove('typing');t.textContent=reply;S.words.push(words(reply));S.lastReply=reply;nxt.hidden=false;}},'Send: “'+sc.msg+'”');
+ const nxt=el('button',{class:'btn',hidden:true,onclick:()=>{if(last)quest();else{S.idx++;chat();}}},last?'Continue to the questionnaire':'Next situation');
+ show(el('div',{class:'card'},el('div',{class:'hd'},'ShopNest · AI support assistant'),el('p',{class:'muted'},'Situation '+(S.idx+1)+' of 3'),
+  el('div',{class:'order'},el('strong',null,'Your order page'),...sc.card.map(l=>el('div',null,l))),log,el('div',{class:'row'},send,nxt)),true);}
+function quest(){
+ const next=el('button',{class:'btn',disabled:true,onclick:()=>debrief()},'Continue');
+ const chk=()=>{next.disabled=S.trust.includes(null)||S.realism==null||S.chkCorrect==null||S.chkDiff==null;};
+ const item=(it,k)=>{const set=v=>{S.trust[k]=v;chk();};let ctl;
+  if(it.k==='choice'){const bs=it.o.map((txt,m)=>{const b=el('button',{type:'button',class:'opt',onclick:()=>{bs.forEach(x=>x.classList.remove('on'));b.classList.add('on');set(m+1);}},txt);return b;});ctl=el('div',{class:'opts'},bs);}
+  else if(it.k==='num')ctl=scale(11,it.lo,it.hi,set,0);
+  else ctl=scale(5,it.lo,it.hi,set);
+  return el('div',{class:'q'},el('p',null,(k+1)+'. '+it.t),it.showLast?el('div',{class:'b bot'},S.lastReply):null,ctl);};
+ const agree7=set=>scale(7,'1 = strongly disagree','7 = strongly agree',v=>{set(v);chk();});
+ const ta=el('textarea',{rows:2,placeholder:'Optional',oninput:()=>{S.open=ta.value.trim();}});
+ show(el('div',{class:'card'},el('h2',null,'About the assistant'),el('p',null,'Please answer each question. Think about what you just saw.'),...TRUST_ITEMS.map(item),
+  el('h3',null,'About the study'),
+  el('div',{class:'q'},el('p',null,'The situations felt realistic.'),agree7(v=>{S.realism=v;})),
+  el('div',{class:'q'},el('p',null,'How many of the three replies were correct, in your view?'),scale(4,'0 = none','3 = all three',v=>{S.chkCorrect=v;chk();},0)),
+  el('div',{class:'q'},el('p',null,'How difficult were the situations?'),scale(7,'1 = very easy','7 = very difficult',v=>{S.chkDiff=v;chk();})),
+  el('div',{class:'q'},el('p',null,'In one sentence: what made you trust or distrust the assistant? (optional)'),ta),
+  el('div',{class:'row'},next)),true);}
+function debrief(){
+ const ta=el('textarea',{rows:3,placeholder:'Researcher: type what the participant said'});
+ const save=el('button',{class:'btn',onclick:()=>{S.guess=ta.value.trim();const row=buildRow(S,new Date().toISOString());
+  const ss=store.get(KS,[]);ss.push(row);store.set(KS,ss);
+  if(S.assignedBy==='auto'&&!S.pilot){const q=store.get(KQ,[]);if(q[0]===S.cond){q.shift();store.set(KQ,q);}}done();}},'Save session');
+ show(el('div',{class:'card'},el('h2',null,'Thank you'),el('p',null,'The assistant’s replies were written in advance for this study, and some of them were deliberately wrong. No real orders were involved, and nothing you did was a mistake.'),
+  el('p',{class:'muted'},'Researcher: ask “What do you think was being tested?” and type the answer.'),ta,el('div',{class:'row'},save)),true);}
+function done(){show(el('div',{class:'card'},el('h2',null,'Session saved'),el('p',null,'Participant '+S.pid+' is saved. Please hand the device back to the researcher.'),
+ el('div',{class:'row'},el('button',{class:'btn',onclick:()=>{S=null;setup();}},'Next participant'))));}
+setup();
+</script>
+</body>
+</html>
