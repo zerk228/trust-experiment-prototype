@@ -1,0 +1,17 @@
+scenario,accuracy,count,mean
+C1,correct,6,26.83
+C1,incorrect,9,14.89
+C2,correct,6,26.33
+C2,incorrect,10,14.4
+C3,correct,9,24.89
+C3,incorrect,8,14.25
+C4,correct,9,25.33
+C4,incorrect,6,16.17
+S1,correct,9,27.22
+S1,incorrect,9,21.56
+S2,correct,11,27.82
+S2,incorrect,8,21.38
+S3,correct,8,28.38
+S3,incorrect,8,18.5
+S4,correct,5,28.0
+S4,incorrect,8,18.75

@@ -1,0 +1,149 @@
+== 1. Rows at each stage ==
+rows in raw file: 48; pilot rows: 5; main rows: 43
+duplicate pid: 0
+missing in required columns: 0
+totals that do not recompute from pts1-pts10: 0
+trust_total outside 0-40: 0
+open_text filled (main): 24 of 43; guess_text filled (main): 35 of 43
+manual assignment in main rows: 0; in pilot rows: 1
+main rows per condition: {'A': 11, 'B': 11, 'C': 10, 'D': 11}
+incorrect replies word-length rule: see scenarios/scenario_pool.csv
+
+== 2. Trust total by condition (main sessions) ==
+condition  n  mean  median   sd    q1   q3  min  max  range  in_trust_band  in_mixed_band  in_distrust_band
+        A 11 27.82    28.0 5.27 25.50 31.0   18   36     18              7              4                 0
+        B 11 20.09    17.0 7.42 14.50 26.5   11   33     22              3              6                 2
+        C 10 25.70    27.0 5.17 21.75 29.0   16   33     17              5              5                 0
+        D 11 14.82    14.0 4.42 12.00 18.0    7   22     15              0              7                 4
+
+== 3. Difference from baseline A (points, 0-40 scale) ==
+condition  n  mean_diff_vs_A     ci_low   ci_high  welch_p  mannwhitney_p  median_diff_vs_A
+        B 11       -7.727273 -13.492369 -1.962177 0.011432       0.019402             -11.0
+        C 10       -2.118182  -6.889311  2.652947 0.364302       0.478016              -1.0
+        D 11      -13.000000 -17.335135 -8.664865 0.000005       0.000227             -14.0
+B against A: mean difference -7.73, 95% CI -13.49 to -1.96, Welch p = 0.011432, median difference -11.0
+C against A: mean difference -2.12, 95% CI -6.89 to 2.65, Welch p = 0.364302, median difference -1.0
+D against A: mean difference -13.00, 95% CI -17.34 to -8.66, Welch p = 0.000005, median difference -14.0
+
+== 4. Accuracy effect (ER1) ==
+n correct = 21, n incorrect = 22
+mean correct = 26.81, mean incorrect = 17.45, median correct = 28.0, median incorrect = 16.5
+difference = 9.35 points, 95% CI 5.72 to 12.99, Welch p = 0.000006, df = 39.7
+Mann-Whitney p = 0.000050; Cohen d = 1.58
+difference of medians = 11.5 points
+threshold 8 points: observed 9.35 -> crossed point estimate: True; lower CI end >= 8: False
+bootstrap 95% interval of the difference (10000 resamples, seed 2431): 5.84 to 12.74; share of resamples with difference >= 8: 0.791
+
+== 5. Interaction (ER2) ==
+drop simple (A-B) = 7.73; drop complex (C-D) = 10.88; difference of drops = 3.15
+OLS interaction coefficient (incorrect x complex) = -3.15, 95% CI -10.19 to 3.88, p = 0.370  (negative = bigger drop for complex)
+OLS: effect of incorrect in simple = -7.73; effect of complex when correct = -2.12
+complexity effect among correct replies (C - A) = -2.12, 95% CI -7.15 to 2.91, p = 0.400
+with covariates prior_use and realism: accuracy effect = 7.57 (simple, CI 2.58 to 12.56); interaction = -2.16 (CI -9.62 to 5.29, p = 0.560); prior_use coef = -0.34 (p = 0.657); realism coef = 0.71 (p = 0.350)
+power note: smallest interaction this design (n about 11 per cell) detects with 80% power: about 9.7 points (2.8 x SE of the interaction, SE = 3.46)
+main-effect model without covariates: accuracy effect (correct minus incorrect) = 9.27 points, 95% CI 5.76 to 12.77, p = 0.000004; complexity effect = -3.73 (CI -7.24 to -0.23, p = 0.037)
+main-effect model with prior_use and realism: accuracy effect (correct minus incorrect) = 8.53 points, 95% CI 4.81 to 12.25, p = 0.000040; complexity effect = -3.68 (CI -7.22 to -0.14, p = 0.042)
+realism in the adjusted main-effect model: coefficient 0.84 points per scale step (CI -0.60 to 2.29, p = 0.245)
+2x2 R-squared = 0.469
+
+== 6. Expected bands (ER3, ER4) ==
+mean A = 27.82, B = 20.09, C = 25.70, D = 14.82
+A median = 28.0; sessions in trust band: A 7 of 11
+B: mean 20.09; in trust band 3 of 11; in mixed band 6; in distrust band 2
+D: mean 14.82; in trust band 0 of 11; in mixed band 7; in distrust band 4
+T10 expected means: A 28-35 -> A 27.8; C 26-33 -> C 25.7; B 14-22 -> B 20.1; D 8-16 -> D 14.8
+C mean 25.70 vs A mean 27.82: difference 2.12
+
+== 7. Check questions (ER6, ER7) ==
+check_correct (0-3) by condition: A mean 3.00 median 3.0; B mean 0.64 median 0.0; C mean 2.60 median 3.0; D mean 0.91 median 1.0
+check_correct by accuracy: correct mean 2.81, incorrect mean 0.77
+incorrect-condition sessions with check_correct >= 2: 5 of 22 (P07, P08, P29, P40, P46)
+correct-condition sessions with check_correct <= 1: 1 of 21 (P24)
+check_difficulty (1-7): simple mean 2.68 median 3.0; complex mean 4.62 median 4.0; gap 1.94
+difficulty gap CI 1.36 to 2.51, Welch p = 0.000000
+check_difficulty by accuracy: correct 3.48, incorrect 3.77
+incorrect conditions: noticed (check_correct <= 1) n = 17, mean trust 16.35; did not notice (>= 2) n = 5, mean trust 21.20
+sensitivity: only sessions where the check question matches the manipulation: n = 37 (20 correct, 17 incorrect); difference = 10.60, CI 6.49 to 14.70, p = 0.000011
+sensitivity: all 48 rows including pilot: difference = 8.25, CI 4.79 to 11.71, p = 0.000018
+
+== 8. Confounders and balance ==
+prior_use (1-5) median by condition: A 3.0; B 3.0; C 2.5; D 3.0; Kruskal-Wallis p = 0.883
+realism (1-7) median by condition: A 5.0 (mean 5.09); B 5.0 (mean 5.00); C 6.0 (mean 5.70); D 4.0 (mean 4.18); Kruskal-Wallis p = 0.055
+realism >= 4: 37 of 43 (86.0 percent); mean realism 4.98; median 5.0
+prior_use vs trust_total: Pearson r = -0.10 (p = 0.52); Spearman rho = -0.09 (p = 0.56)
+realism vs trust_total: Pearson r = 0.34 (p = 0.03)
+session order (participant number) vs trust_total: r = -0.07 (p = 0.64)
+duration (min): median 12.3, quartiles 10.8 to 14.2, min 7.6, max 20.4; planned 13
+duration median by condition: A 10.8; B 12.2; C 12.7; D 14.5
+duration vs trust_total: r = -0.11 (p = 0.47)
+total words of the three replies by condition (mean): A 47.6; B 44.9; C 140.7; D 137.8
+gap per scenario (correct minus incorrect):
+accuracy  correct  incorrect  gap_correct_minus_incorrect
+scenario                                                 
+C1          26.83      14.89                        11.94
+C2          26.33      14.40                        11.93
+C3          24.89      14.25                        10.64
+C4          25.33      16.17                         9.16
+S1          27.22      21.56                         5.66
+S2          27.82      21.38                         6.44
+S3          28.38      18.50                         9.88
+S4          28.00      18.75                         9.25
+mean trust by scenario seen (a session contributes to the 3 scenarios it saw) saved to table_by_scenario.csv
+scenario  accuracy  count  mean
+      C1   correct      6 26.83
+      C1 incorrect      9 14.89
+      C2   correct      6 26.33
+      C2 incorrect     10 14.40
+      C3   correct      9 24.89
+      C3 incorrect      8 14.25
+      C4   correct      9 25.33
+      C4 incorrect      6 16.17
+      S1   correct      9 27.22
+      S1 incorrect      9 21.56
+      S2   correct     11 27.82
+      S2 incorrect      8 21.38
+      S3   correct      8 28.38
+      S3 incorrect      8 18.50
+      S4   correct      5 28.00
+      S4 incorrect      8 18.75
+
+== 9. Items and reliability ==
+Cronbach alpha (10 scores, 43 sessions) = 0.87
+ question  mean_correct  mean_incorrect  difference  median_correct  median_incorrect  item_rest_r
+        1          2.48            2.05        0.43             3.0               2.0         0.39
+        2          2.90            2.36        0.54             3.0               2.0         0.58
+        3          2.43            1.55        0.88             2.0               1.5         0.60
+        4          2.05            1.45        0.59             2.0               1.5         0.53
+        5          2.81            1.95        0.85             3.0               2.0         0.57
+        6          2.52            1.86        0.66             3.0               2.0         0.64
+        7          3.19            1.23        1.96             3.0               1.0         0.65
+        8          2.57            1.68        0.89             3.0               1.0         0.56
+        9          3.05            1.36        1.68             3.0               1.0         0.74
+       10          2.81            1.95        0.85             3.0               2.0         0.66
+alpha if question dropped: Q1 0.87, Q2 0.86, Q3 0.86, Q4 0.86, Q5 0.86, Q6 0.85, Q7 0.85, Q8 0.86, Q9 0.84, Q10 0.85
+trust total without Q1, Q2, Q4 (max 28): correct-incorrect = 7.79 (CI 5.02 to 10.56); as share of 28 = 27.8 percent, main score share of 40 = 23.4 percent
+
+== 10. Extra numbers ==
+trust_band counts overall (main): {'mixed': 22, 'trust': 15, 'distrust': 6}
+correct vs incorrect: share in trust band: correct 12 of 21; incorrect 3 of 22
+correct vs incorrect: share in distrust band (0-13): correct 0 of 21; incorrect 6 of 22
+incorrect-reply totals between 10 and 20: 16 of 22; correct-reply totals between 24 and 36: 16 of 21; lowest correct total 16, highest incorrect total 33
+check_correct counts by condition (columns = answer 0,1,2,3):
+check_correct  0  1  2   3
+condition                 
+A              0  0  0  11
+B              7  2  1   1
+C              0  1  2   7
+D              5  3  2   1
+lowest trust total: 7 (P16); highest: 36 (P48)
+sessions in B in trust band: P17, P18, P46
+sessions in A below 27: P09, P21, P26, P36
+
+== 11. Derived numbers used in the text ==
+A mean minus 27 = 0.82; 28 minus A mean = 0.18; 26 minus C mean = 0.30
+margins over 8 points: unadjusted 1.35; adjusted 0.53; all 48 rows 0.25; matching-check subset 2.60
+difference of check_correct means (correct minus incorrect) = 2.04; A minus B = 7.73
+bootstrap share of resamples with difference >= 8: 79.1 percent
+adjusted interaction (drop complex minus drop simple, with prior use and realism) = 2.16, CI -5.29 to 9.62
+sessions per start date (UTC), all 48 rows: {'2026-10-23': 20, '2026-10-24': 18, '2026-10-25': 10}
+trust answers: 10 x 43 = 430
